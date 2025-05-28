@@ -37,6 +37,16 @@
                             break;
                         }
 
+                        bool existuje = knihovna.Any(k => k.Title.Equals(title, StringComparison.OrdinalIgnoreCase)
+                        &&
+                        k.Author.Equals(author, StringComparison.OrdinalIgnoreCase));
+
+                        if (existuje)
+                        {
+                            Console.WriteLine("Tato kniha již v knihovně existuje.");
+                            break;
+                        }
+
                         try
                         {
                             Book novaKniha = new Book(title, author, publishedDate, pages);
@@ -68,6 +78,61 @@
                             }
                             break;
                         }
+                    case "STATS":
+                        {
+                            if (knihovna.Count == 0)
+                            {
+                                Console.WriteLine("Statistiku nelze spočítat – knihovna je prázdná.");
+                                break;
+                            }
+
+                            double prumer = knihovna.Select(k => k.Pages).Average();
+                            Console.WriteLine($"Průměrný počet stran: {Math.Round(prumer)}");
+
+                            var pocetKnihPodleAutora = knihovna.GroupBy(k => k.Author).Select(skupina => new { Autor = skupina.Key, Pocet = skupina.Count() });
+                            
+                            foreach (var zaznam in pocetKnihPodleAutora)
+                            {
+                                Console.WriteLine($"{zaznam.Autor}: {zaznam.Pocet}");
+                            }
+
+                            var unikatniSlova = knihovna.SelectMany(k => k.Title.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                            .Select(slovo => slovo.ToLower().Trim(',', '.', ':', ';', '-', '!'))
+                            .Where(slovo => !string.IsNullOrWhiteSpace(slovo))
+                            .Distinct();
+
+                            Console.WriteLine($"Počet unikátních slov v názvech knih: {unikatniSlova.Count()}");
+                            break;
+                        }
+
+                    case "FIND":
+                        {
+                            if (casti.Length != 2)
+                            {
+                                Console.WriteLine("Použij formát: FIND;klíčové_slovo");
+                                break;
+                            }
+
+                            string hledaneSlovo = casti[1].ToLower();
+
+                            var vysledky = knihovna
+                                .Where(k => k.Title.ToLower().Contains(hledaneSlovo))
+                                .ToList();
+
+                            if (vysledky.Count == 0)
+                            {
+                                Console.WriteLine($"Žádné knihy neodpovídají hledání pro \"{hledaneSlovo}\".");
+                                break;
+                            }
+
+                            Console.WriteLine($"Výsledky hledání pro \"{hledaneSlovo}\":");
+                            foreach (var kniha in vysledky)
+                            {
+                                Console.WriteLine($" - {kniha.Title}");
+                            }
+
+                            break;
+                        }
 
                     case "END":
                         return;
@@ -76,11 +141,6 @@
                         Console.WriteLine("Neznámý příkaz.");
                         break;
 
-                        //}
-                        //if (vstup.ToUpper() == "END")
-                        //    break;
-
-                        //if (vstup.ToUpper() == "END")
                 }
             }
             
